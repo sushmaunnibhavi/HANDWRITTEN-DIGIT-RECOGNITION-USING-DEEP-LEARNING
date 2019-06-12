@@ -53,7 +53,9 @@ def load_dataset():
             2nd dimension:represents number of channels(1 for monochromatic and 3 for fully coloured)
             3rd and 4th dimension represent pixel
             """
+            print(data.shape[0])
             data=data.reshape(-1,1,28,28)
+            
             """here 1st dimension is made -1,the number of images will be inferred from value of other 
             dimensions and length of input array
             """
@@ -71,12 +73,16 @@ def load_dataset():
     X_train=load_mnist_images('train-images-idx3-ubyte.gz')
     y_train=load_mnist_labels('train-labels-idx1-ubyte.gz')
     X_test=load_mnist_images('t10k-images-idx3-ubyte.gz')
-    y_test=load_mnist_images('t10k-labels-idx1-ubyte.gz')
+    y_test=load_mnist_labels('t10k-labels-idx1-ubyte.gz')
 
     return X_train,y_train,X_test,y_test
 
 X_train,y_train,X_test,y_test=load_dataset()
 
+import matplotlib.pyplot as plt
+#convert numpy array into image using imshow
+plt.show(plt.imshow(X_train[1][0]))
+plt.show(plt.imshow(X_train[0][0]))
 
 
 
