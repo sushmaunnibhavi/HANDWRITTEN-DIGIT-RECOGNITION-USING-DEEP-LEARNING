@@ -84,6 +84,137 @@ import matplotlib.pyplot as plt
 plt.show(plt.imshow(X_train[1][0]))
 plt.show(plt.imshow(X_train[0][0]))
 
+#Step2: Set up a neural network and train it
+
+"""
+use 2 packages:
+    theano :mathematical package that aallows us to work with high dimensional arrays-tensor
+    lasagne:it uses theano and helps in building neural networks.Used to set up and train neural network
+"""
+import lasagne
+import theano
+import theano.tensor as T
+def build_NN(input_var=None):
+    """
+    we are creating a neural network of 2 hidden layers of 800 nodes each and output
+    layer will have 10 nodes,numbered 0-9 and output at each node will be a value between
+    0-1.The node with the highest output will be the  predicted output.
+    First there is an input layer-expected input shape is 1*28*28 for 1 img
+    Now we will link this input layer to input_var(which will be the array of images
+    that we will pass later on)
+    """
+    
+    """
+    Here we set up input layer l_in and shape of input will be 1*28*28 and link the 
+    input to input var
+    """
+    l_in=lasagne.layers.InputLayer(shape=(None,1,28,28),input_var=input_var)
+    
+    """
+    Since we are using CNN we add a 20% dropout where randomly 20% of the edges
+    between the inputs and the next layer will be dropped-done to avoid 
+    overfitting
+    """
+    
+    l_in_drop=lasagne.layers.DropoutLayer(l_in,p=0.2)
+    
+    
+    """
+    Addd a layer(hidden layer) with 800 nodes ,initially it is dense or fully
+    connected.It takes the previous layer(l_in_drop) as input.
+    Glorot helps to initialize the layer with some weights,this is done 
+    so that training becomes faster
+    """
+    l_hid1=lasagne.layers.DenseLayer(l_in_drop,num_units=800,
+                                     nonlinearity=lasagne.nonlinearities.rectify,
+                                     W=lasagne.init.GlorotUniform())
+    """
+    We will now add a dropout of 50% to first hidden layer
+    """
+    
+    l_hid1_drop=lasagne.layers.DropoutLayer(l_hid1,p=0.5)
+    
+    """
+    Add another hidden layer which takes as its input the first hidden layyer
+    """
+    l_hid2=lasagne.layers.DenseLayer(l_hid1_drop,num_units=800,
+                                     nonlinearity=lasagne.nonlinearities.rectify,
+                                     W=lasagne.init.GlorotUniform())
+     
+    l_hid2_drop=lasagne.layers.DropoutLayer(l_hid2,p=0.5)
+     
+    """
+    Add the final output layer,has 10 nodes,each one for each digit
+    """
+     
+    l_out=lasagne.layers.DenseLayer(l_hid2_drop,num_units=10,
+                                     nonlinearity=lasagne.nonlinearities.softmax)
+    """
+    Output is a softmax where we get outputs between 0-1,max of those
+    is the final output
+    """
+    return l_out
+
+    """
+    After setting up the network,we have to tell the network how to train itself
+    .ie. we need to find the values of all the weights.
+    To do this set up some functions, .ie. initialize some empty arrays which
+    will act as placeholders for actual training/test data and we will give 
+    those placeholder data to network(input_var)
+    """
+    
+    input_var=T.tensor4('inputs')#an empty 4D array
+    target_var=T.ivector('targets')#empty 1D array to represent labels
+    
+    network=build_NN(input_var)#call the function that initializes NN
+    
+    
+    """
+    To train the network we do:
+        1.compute an error function
+    """
+    prediction=lasagne.layers.get_output(network)
+    loss=lasagne.objectives.categorical_crossentropy(prediction,target_var)
+    """
+    Categorical cross entropy is one of the standard error function for
+    classification problems
+    """
+    loss=loss.mean()
+    
+    
+    """
+    Tell the network how to update value of weights based  on error
+    function.
+    Params contains all the weights of the network currently 
+    """
+    params=lasagne.layers.get_all_params(network,trainable=True)
+    
+    """
+    now params will be incrementally changed based on error value
+    """
+    updates=lasagne.updates.nesterov_momentum(loss,params,learning_rate=0.01, momentum=0.9)
+    """
+    Nesterov momentum is provided by lasagne for updating the weights
+    """
+    
+    
+    """
+    we'll use theano to compile a function that is going to represent a single 
+    training step .ie. compute error,find current weights,update weights
+    """
+    train_fn=theano.function([input_var,target_var],loss,updates=updates)
+    
+    """
+    calling this function updates the weights until we get a min value of error
+    """
+    
+    
+    
+    
+ 
+     
+    
+
 
 
 
