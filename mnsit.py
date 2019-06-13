@@ -83,7 +83,7 @@ import matplotlib.pyplot as plt
 #convert numpy array into image using imshow
 plt.show(plt.imshow(X_train[1][0]))
 plt.show(plt.imshow(X_train[0][0]))
-
+plt.show(plt.imshow(X_test[0][0]))
 #Step2: Set up a neural network and train it
 
 """
@@ -154,60 +154,107 @@ def build_NN(input_var=None):
     is the final output
     """
     return l_out
+"""
+After setting up the network,we have to tell the network how to train itself
+.ie. we need to find the values of all the weights.
+To do this set up some functions, .ie. initialize some empty arrays which
+will act as placeholders for actual training/test data and we will give 
+those placeholder data to network(input_var)
+"""
+    
+input_var=T.tensor4('inputs')#an empty 4D array
+target_var=T.ivector('targets')#empty 1D array to represent labels
+    
+network=build_NN(input_var)#call the function that initializes NN
+    
+    
+"""
+To train the network we do:
+      1.compute an error function
+"""
+prediction=lasagne.layers.get_output(network)
+loss=lasagne.objectives.categorical_crossentropy(prediction,target_var)
+"""
+Categorical cross entropy is one of the standard error function for
+classification problems
+"""
+loss=loss.mean()
+    
+    
+"""
+Tell the network how to update value of weights based  on error
+function.
+Params contains all the weights of the network currently 
+"""
+params=lasagne.layers.get_all_params(network,trainable=True)
+    
+"""
+now params will be incrementally changed based on error value
+"""
+updates=lasagne.updates.nesterov_momentum(loss,params,learning_rate=0.01, momentum=0.9)
+"""
+Nesterov momentum is provided by lasagne for updating the weights
+"""
+    
+    
+"""
+we'll use theano to compile a function that is going to represent a single 
+training step .ie. compute error,find current weights,update weights
+"""
+train_fn=theano.function([input_var,target_var],loss,updates=updates)
+    
+"""
+calling this function updates the weights until we get a min value of error
+"""
+    
+"""
+Step 3:feed the training data to neural network
+let us train it 10 times
+"""
+num_training_steps=20
+for step in range(num_training_steps):
+    #pass the training images and labels
+    train_err=train_fn(X_train,y_train)
+    print('Current step is'+str(step))
+    
+    
+"""
+Step 4:Now the neural network has been trained.
+We will now check what the output looks like for a test image.
+"""
+#pass the trained network into a function called test_prediction
+test_prediction=lasagne.layers.get_output(network)
+#create a function that takes in the input images and predicts the output
+val_fn=theano.function([input_var],test_prediction)
+    
+#pass the first image in test images to val_fn
+print(val_fn([X_test[0]]))#gives the output for 1 image
+print(y_test[0])  
 
-    """
-    After setting up the network,we have to tell the network how to train itself
-    .ie. we need to find the values of all the weights.
-    To do this set up some functions, .ie. initialize some empty arrays which
-    will act as placeholders for actual training/test data and we will give 
-    those placeholder data to network(input_var)
-    """
+"""
+Now we will feed a dataset of 10000 images and check its accuracy.
+Now we create a function that takes in the test images and labels and 
+feed it into our network and check the accuracy
+""" 
+test_prediction=lasagne.layers.get_output(network,deterministic=True)
+test_acc=T.mean(T.eq(T.argmax(test_prediction,axis=1),target_var),dtype=theano.config.floatX)
+"""
+Here to calculate acccuracy,we check the index of the max value in each
+test prediction and match it with the actual value
+"""
+acc_fn=theano.function([input_var,target_var],test_acc)
+print(acc_fn(X_test,y_test))
+
+"""
+To improve the accuracy:
+    1.Can increase the number of training steps
+    2.Can divide the training dataset into small subsets and run them 
+    individually
     
-    input_var=T.tensor4('inputs')#an empty 4D array
-    target_var=T.ivector('targets')#empty 1D array to represent labels
-    
-    network=build_NN(input_var)#call the function that initializes NN
-    
-    
-    """
-    To train the network we do:
-        1.compute an error function
-    """
-    prediction=lasagne.layers.get_output(network)
-    loss=lasagne.objectives.categorical_crossentropy(prediction,target_var)
-    """
-    Categorical cross entropy is one of the standard error function for
-    classification problems
-    """
-    loss=loss.mean()
-    
-    
-    """
-    Tell the network how to update value of weights based  on error
-    function.
-    Params contains all the weights of the network currently 
-    """
-    params=lasagne.layers.get_all_params(network,trainable=True)
-    
-    """
-    now params will be incrementally changed based on error value
-    """
-    updates=lasagne.updates.nesterov_momentum(loss,params,learning_rate=0.01, momentum=0.9)
-    """
-    Nesterov momentum is provided by lasagne for updating the weights
-    """
-    
-    
-    """
-    we'll use theano to compile a function that is going to represent a single 
-    training step .ie. compute error,find current weights,update weights
-    """
-    train_fn=theano.function([input_var,target_var],loss,updates=updates)
-    
-    """
-    calling this function updates the weights until we get a min value of error
-    """
-    
+"""
+
+
+
     
     
     
