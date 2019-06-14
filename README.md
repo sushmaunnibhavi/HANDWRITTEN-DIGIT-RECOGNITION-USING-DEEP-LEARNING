@@ -1,1 +1,1 @@
-# handwritten-digit-recognition-using-CNN
+# HANDWRITTEN DIGIT RECOGNITION USING DEEP LEARNING
